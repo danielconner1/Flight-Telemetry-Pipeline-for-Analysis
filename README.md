@@ -43,8 +43,8 @@ This project focuses on building a simple but structured pipeline that moves raw
 
 ```mermaid
 flowchart TD
-    A[Raw Telemetry Data] --> B[Ingest & Validate]
-    B --> C[Normalize Time-Series<br/>(align signals)]
-    C --> D[Feature Engineering<br/>(phases, engine metrics)]
-    D --> E[Analytics-Ready Data]
-    E --> F[Query / Analysis / ML]
+    A[Raw Telemetry Data] --> B[Ingest and Validate]
+    B --> C[Normalize Time Series]
+    C --> D[Feature Engineering]
+    D --> E[Analytics Ready Data]
+    E --> F[Query Analysis ML]
