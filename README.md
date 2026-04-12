@@ -2,49 +2,49 @@
 
 ## Overview
 
-This project builds a data pipeline for working with aviation telemetry data. The goal is to take raw flight sensor data and turn it into something you can actually analyze.
+This project builds an end-to-end data pipeline for working with aviation telemetry data. The goal is to transform raw flight sensor data into a structured, analysis-ready dataset.
 
-The dataset includes a mix of signals collected at different rates (engine data, flight controls, system states, etc.), so a big part of the pipeline is getting everything aligned on a consistent timeline. From there, the pipeline standardizes the data, derives useful features (like flight phases and engine comparisons), and outputs datasets that are easier to query and explore.
+The pipeline processes raw telemetry files, standardizes time-series data, and generates flight-level features that capture both overall flight characteristics and dynamic behavior.
 
 ---
 
 ## Why this project
 
-Telemetry data is messy. Different sensors behave differently, update at different rates, and don’t always line up cleanly. You also have a mix of:
+Telemetry data is inherently complex:
 
-- continuous values (altitude, speed, engine temperature)
-- discrete states (gear, flaps, weight-on-wheels)
+- Sensors operate at different rates  
+- Data includes both continuous signals (altitude, speed) and discrete states  
+- Raw data is not immediately suitable for analysis  
 
-Each type needs to be handled differently to avoid introducing bad data.
+This project focuses on building a structured pipeline that:
 
-This project focuses on building a simple but structured pipeline that moves raw telemetry data through validation, normalization, and feature engineering so it can be used for analysis or future modeling.
-
----
-
-## What the pipeline does
-
-- Ingests raw flight telemetry files
-- Validates schema and basic data quality
-- Standardizes column names and data types
-- Aligns multi-rate sensor data to a common time index
-- Applies:
-  - interpolation for continuous signals
-  - forward-fill for discrete/state signals
-- Derives features such as:
-  - flight phases
-  - engine performance metrics
-  - engine-to-engine comparisons
-- Flags anomaly candidates (e.g., engine imbalance)
-- Outputs analytics-ready datasets (Parquet + DuckDB)
+- standardizes telemetry data  
+- preserves signal fidelity  
+- enables downstream analysis and modeling  
 
 ---
 
-## Architecture
+## What the pipeline currently does
 
-```mermaid
-flowchart TD
-    A[Raw Telemetry Data] --> B[Ingest and Validate]
-    B --> C[Normalize Time Series]
-    C --> D[Feature Engineering]
-    D --> E[Analytics Ready Data]
-    E --> F[Query Analysis ML]
+### Ingest
+- Converts raw telemetry data into Parquet format  
+- Handles file-level processing and skip logic  
+
+### Process
+- Normalizes column names  
+- Constructs a unified timestamp from date/time components  
+- Sorts data chronologically  
+- Removes invalid or incomplete records  
+
+### Feature Engineering
+- Aggregates time-series data into one row per flight  
+- Generates summary features such as:
+  - flight duration  
+  - altitude statistics (max, mean, standard deviation, range)  
+  - airspeed statistics (true and ground speed mean and variability)  
+- Derives dynamic features capturing behavior over time:
+  - climb rate (max and variability)  
+  - speed change (max and variability)  
+
+### Pipeline Execution
+- Provides a pipeline runner to execute all stages:
