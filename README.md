@@ -46,3 +46,24 @@ flowchart TD
   B --> C[Process Time Series]
   C --> D[Feature Engineering]
   D --> E[Flight Summary Dataset]
+
+
+## Future Work
+
+### Dockerization
+- Containerize the pipeline for consistent execution across environments  
+- Standardize Python runtime, dependencies, and filesystem layout  
+- Enable deployment to cloud or container-based platforms  
+
+### CI/CD Integration
+- Add automated pipeline validation using GitHub Actions or GitLab CI  
+- Run linting and unit tests on every commit  
+- Validate pipeline execution against a small sample dataset  
+- Prevent regressions and ensure reproducibility  
+
+### Monitoring & Alerting
+- Add alerting for pipeline failures and data quality issues  
+- Integrate logging and monitoring tools  
+- Add alerting for pipeline failures and data quality issues  
+- Integrate logging and monitoring tools  
+- Improve observability for production usage  
