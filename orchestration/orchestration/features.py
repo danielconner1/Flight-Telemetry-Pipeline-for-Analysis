@@ -70,7 +70,7 @@ def features():
 
     summary_df = pd.DataFrame(summaries)
 
-    FEATURES_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    FEATURES_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
     summary_df.to_parquet(FEATURES_OUTPUT_PATH, index=False)
 
     print("\nSummary dataset created")

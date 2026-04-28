@@ -28,6 +28,7 @@ from .ingest import ingest_raw_csv_to_parquet
 from .config import (
     RAW_PARQUET_DATA_PATH,
     DATE_COLS,
+    PROCESSED_PARQUET_DATA_PATH
 )
 
 
@@ -70,7 +71,7 @@ def process():
         raise FileNotFoundError(f"{RAW_PARQUET_DATA_PATH} does not exist")
 
     # Creates parquet data path if doesn't exist. If it exists, we do nothing.
-    PROCESSED_PARQUET_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PROCESSED_PARQUET_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
     for parquet_file_name in RAW_PARQUET_DATA_PATH.glob("*.parquet"):
         try:
