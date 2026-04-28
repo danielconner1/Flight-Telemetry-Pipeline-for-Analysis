@@ -20,4 +20,4 @@ ENV DAGSTER_HOME=/tmp/dagster_home
 
 EXPOSE 3000
 
-CMD ["dagster", "dev", "-h", "0.0.0.0", "-p", "3000"]
+CMD ["dagster", "dev", "-m", "orchestration.definitions", "-h", "0.0.0.0", "-p", "3000"]

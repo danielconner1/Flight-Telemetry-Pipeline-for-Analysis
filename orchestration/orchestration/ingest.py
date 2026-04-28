@@ -13,7 +13,7 @@ from .config import (
     DATE_COLS,
 )
 
-@asset
+@asset()
 def ingest_raw_csv_to_parquet():
     print("Starting ingest...")
 
@@ -30,7 +30,7 @@ def ingest_raw_csv_to_parquet():
         )
 
     # Creates parquet data path if doesn't exist. If it exists, we do nothing.
-    RAW_PARQUET_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RAW_PARQUET_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
     for csv_file_name in RAW_CSV_DATA_PATH.glob("*.csv"):
 
