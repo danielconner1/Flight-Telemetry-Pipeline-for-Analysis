@@ -3,7 +3,6 @@ name = "telemetry-pipeline"
 version = "0.1.0"
 requires-python = ">=3.10"
 
-
 dependencies = [
   "dagster",
   "dagster-cloud",
@@ -12,4 +11,9 @@ dependencies = [
   "pyarrow"
 ]
 
-tool.dg.directory_type = "project
+
+[tool.dg]
+directory_type = "project
+
+[tool.dg.project]
+root_module = "orchestration"
