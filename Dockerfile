@@ -1,23 +1,10 @@
-FROM python:3.12-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+COPY . /app
 
-COPY . .
+RUN pip install --upgrade pip
+RUN pip install -e .
 
-# Create non-root user
-RUN useradd -m dagster_user
-USER dagster_user
-
-WORKDIR /app/orchestration
-
-RUN mkdir -p /tmp/dagster_home
-
-ENV DAGSTER_HOME=/tmp/dagster_home
-
-EXPOSE 3000
-
-CMD ["dagster", "dev", "-m", "orchestration.definitions", "-h", "0.0.0.0", "-p", "3000"]
+CMD ["dagster", "api", "grpc", "-m", "orchestration.orchestration.defs"]
