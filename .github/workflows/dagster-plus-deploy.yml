@@ -73,13 +73,12 @@ jobs:
         shell: bash
 
       - name: Create project virtual environment
-        if: steps.prerun.outputs.result != 'skip'
-        run: |
-          python -m venv .venv
-          .venv/bin/python -m pip install --upgrade pip
-          .venv/bin/python -m pip install -r requirements.txt
-          .venv/bin/python -m pip install dagster-cloud dagster-dg-cli
-        shell: bash
+  	if: steps.prerun.outputs.result != 'skip'
+  	run: |
+    	  python -m pip install uv
+    	  uv venv
+    	  uv sync
+  	  shell: bash
 
       # Refresh state for any StateBackedComponents in the project
       - name: Refresh defs state
