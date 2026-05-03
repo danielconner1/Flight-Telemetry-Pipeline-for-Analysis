@@ -26,10 +26,15 @@ import pandas as pd
 from dagster import asset, MaterializeResult
 from .ingest import ingest_raw_csv_to_parquet
 from .process import process
+import io
+from .s3_utils import (get_file_list,
+                       is_file, upload_to_s3, get_df_from_s3_parquet)
 
 from .config import (
-    PROCESSED_PARQUET_DATA_PATH,
-    FEATURES_OUTPUT_PATH
+    S3_PROCESSED_PATH,
+    S3_BUCKET,
+    S3_FEATURES_FILE_NAME,
+    S3_FEATURES_PATH
 )
 
 def build_summary_features(df: pd.DataFrame, file_name: str) -> dict:
@@ -56,22 +61,34 @@ def features():
     summaries = []
 
     status = "Success"
-    for file in PROCESSED_PARQUET_DATA_PATH.glob("*.parquet"):
-        try:
-            print(f"Processing {file.name}")
-            df = pd.read_parquet(file)
+    s3_processed_files = get_file_list(S3_BUCKET, S3_PROCESSED_PATH)
 
-            summary = build_summary_features(df, file.name)
+    for processed_file in s3_processed_files:
+        try:
+            processed_file_name = processed_file["Key"]
+
+            # Don't process if it isn't a file
+            if not is_file(processed_file_name, file_ext='.parquet'):
+                continue
+
+            print(f"Processing {processed_file_name}")
+            df = get_df_from_s3_parquet(S3_BUCKET, processed_file_name)
+
+            summary = build_summary_features(df, processed_file_name)
             summaries.append(summary)
 
         except Exception as e:
-            print(f"Failed: {file.name} -> {e}")
+            print(f"Failed: {processed_file_name} -> {e}")
             status = "Failed"
 
     summary_df = pd.DataFrame(summaries)
 
-    FEATURES_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
-    summary_df.to_parquet(FEATURES_OUTPUT_PATH, index=False)
+    # puts parquet in buffer
+    buffer = io.BytesIO()
+    summary_df.to_parquet(buffer, engine="pyarrow", index=False)
+    buffer.seek(0)
+
+    upload_to_s3(S3_BUCKET, S3_FEATURES_FILE_NAME, buffer)
 
     print("\nSummary dataset created")
     print(summary_df.head())
