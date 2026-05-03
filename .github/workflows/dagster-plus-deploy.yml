@@ -135,7 +135,7 @@ jobs:
         if: steps.prerun.outputs.result != 'skip'
         uses: dagster-io/dagster-cloud-action/actions/utils/dg-cli@v1.13.3
         with:
-          command: "plus deploy set-build-output --path=${{ env.DAGSTER_PROJECT_DIR }} --location-name=Flight-Telemetry-Pipeline-for-Analysis --image-tag=$IMAGE_TAG-Flight-Telemetry-Pipeline-for-Analysis"
+          command: "plus deploy set-build-output --target-path=${{ env.DAGSTER_PROJECT_DIR }} --location-name=Flight-Telemetry-Pipeline-for-Analysis --image-tag=$IMAGE_TAG-Flight-Telemetry-Pipeline-for-Analysis"
 
 
       # Deploy all code locations in this build session to Dagster Cloud
@@ -144,7 +144,7 @@ jobs:
         if: steps.prerun.outputs.result != 'skip'
         uses: dagster-io/dagster-cloud-action/actions/utils/dg-cli@v1.13.3
         with:
-          command: "plus deploy finish --path=${{ env.DAGSTER_PROJECT_DIR }}"
+          command: "plus deploy finish --target-path=${{ env.DAGSTER_PROJECT_DIR }}"
 
       # Update a PR comment - this runs always() so the comment is updated on success and failure
       - name: Update PR comment for branch deployments
