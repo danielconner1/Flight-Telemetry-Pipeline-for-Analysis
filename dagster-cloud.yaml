@@ -1,0 +1,5 @@
+locations:
+  - location_name: telemetry-pipeline
+    image: 585369386233.dkr.ecr.us-west-2.amazonaws.com/telemetry-pipeline:latest
+    code_source:
+      module_name: orchestration.definitions
