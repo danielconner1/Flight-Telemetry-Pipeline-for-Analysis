@@ -4,13 +4,17 @@ Skips existing files and logs processing results.
 
 """
 
-import pandas as pd
+import io
 from dagster import asset, MaterializeResult
+from .s3_utils import (get_file_list, get_df_from_s3_csv, move_s3_bucket_file,
+                      upload_to_s3, has_been_processed, is_file)
 
 from .config import (
-    RAW_CSV_DATA_PATH,
-    RAW_PARQUET_DATA_PATH,
     DATE_COLS,
+    S3_RAW_INCOMING_PATH,
+    S3_RAW_ARCHIVE_PATH,
+    S3_PARQUET_PATH,
+    S3_BUCKET
 )
 
 @asset()
@@ -21,29 +25,34 @@ def ingest_raw_csv_to_parquet():
     skipped = 0
     failed = 0
 
-    if not RAW_CSV_DATA_PATH.exists():
-        raise FileNotFoundError(
-            f"{RAW_CSV_DATA_PATH} does not exist. "
-            "Download data from Kaggle: "
-            "https://www.kaggle.com/datasets/gijsbekkers/qar-flight-data?resource=download "
-            f"and place data in {RAW_CSV_DATA_PATH}"
-        )
+    s3_incoming_files = get_file_list(S3_BUCKET, S3_RAW_INCOMING_PATH)
 
-    # Creates parquet data path if doesn't exist. If it exists, we do nothing.
-    RAW_PARQUET_DATA_PATH.mkdir(parents=True, exist_ok=True)
+    for csv_file_name in s3_incoming_files:
+        key = csv_file_name['Key']
 
-    for csv_file_name in RAW_CSV_DATA_PATH.glob("*.csv"):
-
-        print(f"Processing {csv_file_name.name}")
-
-        try:
-            df = pd.read_csv(csv_file_name)
-        except Exception as e:
-            print(f"Exception while reading {csv_file_name.name}: {e}")
+        #Skip if it isn't a file
+        if not is_file(key):
             continue
 
         # Build Parquet output path from CSV filename
-        parquet_file_name = RAW_PARQUET_DATA_PATH / csv_file_name.with_suffix(".parquet").name
+        file_name = key.split("/")[-1]
+        parquet_file_name = f"{S3_PARQUET_PATH}{file_name.replace('.csv', '.parquet')}"
+        archive_file_name = f"{S3_RAW_ARCHIVE_PATH}{file_name}"
+
+        #Check to see if this file has been archived
+        if has_been_processed(S3_BUCKET, archive_file_name):
+            print(f"Skipping: {archive_file_name}")
+            skipped += 1
+            move_s3_bucket_file(S3_BUCKET, key, archive_file_name)
+            continue
+
+        print(f"Processing {csv_file_name['Key']}")
+
+        try:
+            df = get_df_from_s3_csv(S3_BUCKET, key)
+        except Exception as e:
+            print(f"Exception while reading {key}: {e}")
+            continue
 
         # Cast date/time fields to smaller integer types (int16) since values are small,
         # reducing memory footprint without losing precision
@@ -51,18 +60,25 @@ def ingest_raw_csv_to_parquet():
             df[col] = df[col].astype("int16")
 
         # Convert unprocessed CSV files to Parquet
-        if parquet_file_name.exists():
-            print(f"Skipping: {parquet_file_name.name}")
-            skipped += 1
-        else:
-            try:
-                df.to_parquet(parquet_file_name,engine="pyarrow", index=False)
-                processed += 1
-                print(f"Saved: {parquet_file_name.name}")
+        try:
+            buffer = io.BytesIO()
 
-            except Exception as e:
-                failed += 1
-                print(f"Failed to write parquet file: {parquet_file_name}", e)
+            #puts parquet in buffer
+            df.to_parquet(buffer, engine="pyarrow", index=False)
+            buffer.seek(0)
+
+            # Uploads parquet data to S3 bucket
+            upload_to_s3(S3_BUCKET, parquet_file_name, buffer)
+
+            # Archive
+            move_s3_bucket_file(S3_BUCKET, key, archive_file_name)
+
+            processed += 1
+            print(f"Saved: {parquet_file_name}")
+
+        except Exception as e:
+            failed += 1
+            print(f"Failed to process parquet file: {parquet_file_name}", e)
 
     # Outputs summary counts of processed and failed files
     print("SUMMARY RESULTS")

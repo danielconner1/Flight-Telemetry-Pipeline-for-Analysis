@@ -1,8 +1,9 @@
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-RAW_CSV_DATA_PATH = PROJECT_ROOT / "data" / "raw" / "csv"
-RAW_PARQUET_DATA_PATH = PROJECT_ROOT / "data" / "raw" / "parquet"
 DATE_COLS = ["DATE_YEAR", "DATE_MONTH", "DATE_DAY", "GMT_HOUR", "GMT_MINUTE", "GMT_SEC"]
-PROCESSED_PARQUET_DATA_PATH = PROJECT_ROOT / "data" / "processed" / "parquet"
-FEATURES_OUTPUT_PATH = PROJECT_ROOT / "data" / "features" / "flight_summary.parquet"
+S3_BUCKET = 'telemetrypipeline'
+S3_RAW_INCOMING_PATH = 'raw/incoming/'
+S3_RAW_ARCHIVE_PATH = 'raw/archive/'
+S3_PARQUET_PATH = 'parquet/'
+S3_PROCESSED_PATH = 'processed/'
+S3_FEATURES_PATH = 'features/'
+S3_FEATURES_FILE_NAME = 'features/features.parquet'
+S3_REGION = 'us-east-2'

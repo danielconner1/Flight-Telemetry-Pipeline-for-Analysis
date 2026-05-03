@@ -20,21 +20,22 @@ Design principles:
 - Preserve raw signal behavior for downstream analysis
 """
 
-
+import io
 import pandas as pd
 from dagster import asset, MaterializeResult
 from .ingest import ingest_raw_csv_to_parquet
+from .s3_utils import (get_file_list, has_been_processed, is_file,
+                       upload_to_s3, get_s3_file)
 
 from .config import (
-    RAW_PARQUET_DATA_PATH,
     DATE_COLS,
-    PROCESSED_PARQUET_DATA_PATH
+    S3_PROCESSED_PATH,
+    S3_PARQUET_PATH,
+    S3_BUCKET
 )
 
-
-
-def load_flight(parquet_file_path):
-    return pd.read_parquet(parquet_file_path)
+def load_flight(key):
+    return pd.read_parquet(get_s3_file(S3_BUCKET, key))
 
 def build_timestamp(df):
     for col in DATE_COLS:
@@ -66,36 +67,43 @@ def process():
     skipped = 0
     failed = 0
 
-    # Confirm the raw parquet data path exists
-    if not RAW_PARQUET_DATA_PATH.exists():
-        raise FileNotFoundError(f"{RAW_PARQUET_DATA_PATH} does not exist")
+    s3_parquet_files = get_file_list(S3_BUCKET, S3_PARQUET_PATH)
 
-    # Creates parquet data path if doesn't exist. If it exists, we do nothing.
-    PROCESSED_PARQUET_DATA_PATH.mkdir(parents=True, exist_ok=True)
+    for parquet_file_name in s3_parquet_files:
+        key = parquet_file_name["Key"]
 
-    for parquet_file_name in RAW_PARQUET_DATA_PATH.glob("*.parquet"):
+        # Build Parquet processed output path
+        processed_file_name = key.replace(S3_PARQUET_PATH, S3_PROCESSED_PATH)
+
+        # Don't process if it isn't a file
+        if not is_file(processed_file_name, file_ext='.parquet'):
+            continue
+
         try:
-            print(f"Processing {parquet_file_name.name}")
-
-            # Build Parquet processed output path
-            parquet_processed_file_name = PROCESSED_PARQUET_DATA_PATH / parquet_file_name.name
-
-            if parquet_processed_file_name.exists():
-                print(f"Skipping: {parquet_file_name.name}")
+            print(f"Processing {processed_file_name}")
+            
+            # Checking to usee if file has been processed
+            if has_been_processed(S3_BUCKET, processed_file_name):
+                print(f"Skipping: {processed_file_name}")
                 skipped += 1
                 continue
 
-            df = load_flight(parquet_file_name)
+            df = load_flight(key)
             df = normalize_data(df)
             df = build_timestamp(df)
             df = sort_and_clean(df)
 
-            df.to_parquet(parquet_processed_file_name)
+            # puts parquet in buffer
+            buffer = io.BytesIO()
+            df.to_parquet(buffer, engine="pyarrow", index=False)
+            buffer.seek(0)
+
+            upload_to_s3(S3_BUCKET, processed_file_name, buffer)
             processed += 1
 
         except Exception as e:
             failed += 1
-            print(f"Exception while processing {parquet_file_name.name}: {e}")
+            print(f"Exception while processing {processed_file_name}: {e}")
 
     # Outputs summary counts of processed and failed files
     print("SUMMARY RESULTS")
