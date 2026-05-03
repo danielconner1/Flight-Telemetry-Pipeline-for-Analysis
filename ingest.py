@@ -6,10 +6,19 @@ Skips existing files and logs processing results.
 
 import pandas as pd
 from pathlib import Path
+import boto3
 
 RAW_CSV_DATA_PATH = Path("data/raw/csv/")
 RAW_PARQUET_DATA_PATH = Path("data/raw/parquet/")
 DATE_COLS = ["DATE_YEAR", "DATE_MONTH", "DATE_DAY", "GMT_HOUR", "GMT_MINUTE", "GMT_SEC"]
+BUCKET = 'telemetrypipeline'
+RAW_PATH = 'raw/incoming/'
+PROCESSED_PATH = 'raw/processed/'
+
+def get_raw_incoming_files():
+    s3 = boto3.client('s3')
+    response = s3.list_objects_v2(Bucket='s3://telemetrypipeline/raw/incoming')
+    return set(response['Body'])
 
 def main():
     print("Starting ingest...")
