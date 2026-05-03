@@ -8,7 +8,8 @@ dependencies = [
   "dagster-cloud",
   "dagster-dg-cli",
   "pandas",
-  "pyarrow"
+  "pyarrow",
+  "boto3"
 ]
 
 
