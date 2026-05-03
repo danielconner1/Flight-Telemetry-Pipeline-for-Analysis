@@ -1,4 +1,4 @@
-from dagster import Definitions, define_asset_job, ScheduleDefinition
+from dagster import define_asset_job, ScheduleDefinition
 
 from .ingest import ingest_raw_csv_to_parquet
 from .process import process
