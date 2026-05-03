@@ -1,8 +1,8 @@
 from dagster import define_asset_job, ScheduleDefinition, Definitions
 
-from .ingest import ingest_raw_csv_to_parquet
-from .process import process
-from .features import features
+from ..ingest import ingest_raw_csv_to_parquet
+from ..process import process
+from ..features import features
 
 telemetry_job = define_asset_job(
     name="telemetry_job",
