@@ -135,7 +135,7 @@ jobs:
         if: steps.prerun.outputs.result != 'skip'
         uses: dagster-io/dagster-cloud-action/actions/utils/dg-cli@v1.13.3
         with:
-          command: "plus deploy set-build-output --target-path=${{ env.DAGSTER_PROJECT_DIR }} --location-name=Flight-Telemetry-Pipeline-for-Analysis --image-tag=latest
+          command: "plus deploy set-build-output --target-path=${{ env.DAGSTER_PROJECT_DIR }} --location-name=Flight-Telemetry-Pipeline-for-Analysis --image-tag=latest"
 
 
       # Deploy all code locations in this build session to Dagster Cloud
