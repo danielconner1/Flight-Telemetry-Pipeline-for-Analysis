@@ -6,10 +6,10 @@ Skips existing files and logs processing results.
 
 import io
 from dagster import asset, MaterializeResult
-from .s3_utils import (get_file_list, get_df_from_s3_csv, move_s3_bucket_file,
+from ..s3_utils import (get_file_list, get_df_from_s3_csv, move_s3_bucket_file,
                       upload_to_s3, has_been_processed, is_file)
 
-from .config import (
+from ..config import (
     DATE_COLS,
     S3_RAW_INCOMING_PATH,
     S3_RAW_ARCHIVE_PATH,

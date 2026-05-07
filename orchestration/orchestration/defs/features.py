@@ -27,10 +27,10 @@ from dagster import asset, MaterializeResult
 from .ingest import ingest_raw_csv_to_parquet
 from .process import process
 import io
-from .s3_utils import (get_file_list,
+from ..s3_utils import (get_file_list,
                        is_file, upload_to_s3, get_df_from_s3_parquet)
 
-from .config import (
+from ..config import (
     S3_PROCESSED_PATH,
     S3_BUCKET,
     S3_FEATURES_FILE_NAME,

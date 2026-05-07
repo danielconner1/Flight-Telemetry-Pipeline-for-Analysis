@@ -24,10 +24,10 @@ import io
 import pandas as pd
 from dagster import asset, MaterializeResult
 from .ingest import ingest_raw_csv_to_parquet
-from .s3_utils import (get_file_list, has_been_processed, is_file,
+from ..s3_utils import (get_file_list, has_been_processed, is_file,
                        upload_to_s3, get_s3_file)
 
-from .config import (
+from ..config import (
     DATE_COLS,
     S3_PROCESSED_PATH,
     S3_PARQUET_PATH,
