@@ -1,210 +1,201 @@
 # Flight Telemetry Data Pipeline
 
+This project implements an end-to-end, production-style data engineering pipeline for aviation telemetry data using Python, Dagster, Docker, and AWS. It ingests raw flight telemetry, standardizes time-series signals, and produces a structured, model-ready dataset. The system is orchestrated using Dagster and deployed using a hybrid cloud architecture with Dagster+ and AWS EC2. In addition to pipeline development, this project demonstrates real-world operational concerns including orchestration, CI/CD, containerization, cloud deployment, and infrastructure reliability.
+
 ## Overview
 
-This project builds an end-to-end data pipeline for processing aviation telemetry data. The goal is to transform raw flight sensor data into a structured, analysis-ready dataset suitable for downstream analytics and modeling.
+Telemetry data presents several real-world challenges:
 
-The pipeline ingests raw telemetry files, standardizes time-series data, and generates flight-level features that capture both overall flight characteristics and dynamic behavior.
+- Sensors operate at different sampling rates  
+- Continuous signals (altitude, speed) are mixed with discrete state changes  
+- Data is often incomplete or noisy  
+- Raw data is not directly usable for analytics or machine learning  
 
-The pipeline is orchestrated using Dagster and can be executed within a containerized environment.
+This pipeline transforms raw telemetry into consistent, structured, and feature-rich datasets suitable for downstream analytics.
 
----
+## Pipeline Architecture
 
-## Why this project
+```
+Raw CSV Files
+      ↓
+   Ingest
+      ↓
+Raw Parquet Files
+      ↓
+   Process
+      ↓
+Processed Parquet Files
+      ↓
+Feature Engineering
+      ↓
+Flight Summary Dataset
+```
 
-Telemetry data is inherently complex:
+Each stage is implemented as a Dagster asset, enabling dependency tracking, selective execution, and observability.
 
-- Sensors operate at different sampling rates
-- Data includes both continuous signals, such as altitude and speed, and discrete states
-- Missing or noisy data is common
-- Raw data is not immediately suitable for analysis
+## End-to-End System Architecture
 
-This project focuses on building a structured, production-style pipeline that:
-
-- standardizes telemetry data
-- preserves signal fidelity
-- handles real-world data imperfections
-- produces consistent, model-ready outputs
-- introduces orchestration, observability, and reproducibility
-
----
-
-## Current Pipeline
-
-The pipeline is orchestrated using Dagster. Each stage is defined as a Dagster asset, allowing the pipeline to be executed, monitored, and inspected through the Dagster UI.
-
-Current asset flow:
-
-ingest → process → features
-
-Dagster provides:
-
-- asset-based pipeline modeling
-- dependency management
-- execution logs
-- run metadata
-- selective or full pipeline materialization
-- job-based execution and scheduling
-
-A Dagster job groups all assets into a single executable pipeline.
-
----
+```
+GitHub
+   ↓
+GitHub Actions (CI/CD)
+   ↓
+Docker Build & Push
+   ↓
+AWS ECR (Container Images)
+   ↓
+EC2 Instance (t3.medium)
+   ↓
+┌─────────────────────────────────────────┐
+│ Dagster Cloud Agent                    │
+│   ├─ Code Server (gRPC)                │
+│   ├─ Run Containers                    │
+│   └─ Pipeline Execution Orchestration  │
+└─────────────────────────────────────────┘
+   ↓
+Dagster+ UI (Monitoring & Execution)
+```
 
 ## Pipeline Stages
 
 ### Ingest
 
-The ingest stage converts raw telemetry CSV files into Parquet format.
-
-Responsibilities:
-
-- Read raw CSV telemetry files from the raw data directory
-- Convert files to Parquet for better storage efficiency and downstream performance
-- Skip files that have already been processed
-- Track processed, skipped, and failed files
+- Reads raw CSV telemetry files  
+- Converts files to Parquet format  
+- Skips already processed files  
+- Tracks ingestion metrics  
 
 Output:
 
+```
 data/raw/parquet/
-
----
+```
 
 ### Process
 
-The process stage prepares raw Parquet telemetry files for analysis.
-
-Responsibilities:
-
-- Normalize column names
-- Construct a unified timestamp from date and time components
-- Sort each flight chronologically
-- Remove invalid or incomplete records
-- Write cleaned time-series files to the processed data directory
+- Normalizes column names  
+- Constructs unified timestamps  
+- Sorts telemetry chronologically  
+- Removes invalid or incomplete records  
 
 Output:
 
+```
 data/processed/parquet/
-
----
+```
 
 ### Feature Engineering
 
-The feature engineering stage aggregates processed time-series telemetry into one summary row per flight.
+Aggregates time-series telemetry into one row per flight.
 
-Generated features include:
+Features include:
 
-- flight duration
-- maximum altitude
-- mean altitude
-- altitude standard deviation
-- altitude range
-- true airspeed mean
-- true airspeed standard deviation
-- true airspeed range
-- ground speed mean
-- ground speed standard deviation
-- dynamic behavior metrics such as climb rate and speed change
+- Flight duration  
+- Maximum altitude  
+- Mean altitude  
+- Altitude standard deviation  
+- Altitude range  
+- True airspeed statistics  
+- Ground speed statistics  
+- Derived dynamic metrics (climb rate, variability)  
 
 Output:
 
+```
 data/features/flight_summary.parquet
+```
 
----
+## Orchestration
 
-## Running the Pipeline
+The pipeline is orchestrated using Dagster’s asset-based model.
 
-### Local Dagster Execution
+Capabilities include:
 
-cd orchestration  
-dagster dev -m orchestration.definitions  
+- Asset lineage tracking  
+- Dependency management  
+- Partial or full pipeline execution  
+- Execution logs and metadata  
+- Observability through Dagster UI  
+- Job-based execution  
 
-Open the Dagster UI:
+Pipeline entry point:
 
-http://localhost:3000
+```
+orchestration.orchestration.definitions
+```
 
-From the UI you can:
+## Local Execution
 
-- materialize individual assets
-- run the full pipeline via job
-- inspect logs
-- review execution metadata
-- troubleshoot failed stages
-
----
-
-### Docker Execution
-
-Build and run the container:
-
-docker build -t telemetry-pipeline .  
-docker run --rm -p 3000:3000 telemetry-pipeline  
+```
+cd orchestration
+dagster dev -m orchestration.orchestration.definitions
+```
 
 Open:
 
+```
 http://localhost:3000
+```
 
-This provides a consistent runtime environment and mirrors production-style execution.
+## Docker Execution
 
----
+```
+docker build -t telemetry-pipeline .
+docker run --rm -p 3000:3000 telemetry-pipeline
+```
 
-## Architecture
+## Cloud Deployment (Dagster+ Hybrid)
 
-Raw Telemetry CSV Files  
-→ Ingest  
-→ Raw Parquet Files  
-→ Process Time Series  
-→ Processed Parquet Files  
-→ Feature Engineering  
-→ Flight Summary Dataset  
+The pipeline is deployed using Dagster Cloud Hybrid on AWS EC2.
 
----
+- Docker image built via CI/CD  
+- Image pushed to AWS ECR  
+- EC2 instance runs:  
+  - Dagster Cloud Agent  
+  - Code Server (gRPC)  
+  - Run containers for execution  
 
-## Orchestration and Execution Model
+This mirrors a production-style data engineering environment.
 
-- Assets define pipeline stages and dependencies
-- Jobs group assets into executable pipelines
-- Dagster UI provides observability into runs and asset lineage
-- Docker ensures environment consistency and portability
+## CI/CD
 
----
+CI/CD is implemented using GitHub Actions:
 
-## Design Principles
+- Build Docker image  
+- Push to AWS ECR  
+- Deploy to Dagster Cloud  
+- Update code location automatically  
 
-- Modular stages with clear responsibilities
-- Idempotent processing to support safe re-runs
-- Separation of concerns between ingestion, processing, and features
-- Observability through Dagster logs and metadata
-- Reproducibility via Dockerized execution
-- Extensibility for future enhancements
+This enables consistent, reproducible deployments.
 
----
 
 ## Current Capabilities
 
-- End-to-end telemetry pipeline from raw data to feature dataset
-- Asset-based orchestration using Dagster
-- Job-based execution model
-- Local and containerized execution support
-- Pipeline observability through Dagster UI
-- Scheduled execution using Dagster schedules and daemon
+- End-to-end telemetry pipeline  
+- Asset-based orchestration with Dagster  
+- Dockerized execution  
+- CI/CD deployment pipeline  
+- Hybrid cloud orchestration (Dagster+)  
+- Production debugging and infrastructure scaling
+- S3-based ingestion: reads raw telemetry files from an S3 "incoming" folder
+- Automated file detection: processes new S3 objects while skipping previously ingested files 
 
----
+## Future Enhancements
 
-## Future Work
-
----
-
-### CI/CD Integration
-
-- Add GitHub Actions for automated validation
-- Run dependency installation and pipeline validation on commit
-
----
+- Data quality validation  
+- Observability dashboards (CloudWatch, Grafana)  
+- Data warehouse integration into Postgres
+- Machine learning integration (anomaly detection)  
 
 ## Summary
 
-This project demonstrates a production-oriented data pipeline built with Python, orchestrated using Dagster, and executed in a containerized environment.
+This project demonstrates a complete data engineering workflow:
 
-The pipeline transforms raw telemetry data into structured, feature-rich datasets while maintaining modularity, reproducibility, and scalability.
+- Data ingestion and transformation  
+- Pipeline orchestration  
+- Containerization  
+- CI/CD automation  
+- Cloud deployment  
+- Production debugging and infrastructure scaling  
 
-Future enhancements will focus on scheduling, CI/CD automation, persistence, data quality validation, and scalable execution.
+It reflects real-world challenges and solutions, moving beyond simple pipelines into production-ready systems.
