@@ -2,4 +2,4 @@ locations:
   - location_name: telemetry-pipelinev2
     image: 585369386233.dkr.ecr.us-east-2.amazonaws.com/telemetry-pipeline:latest
     code_source:
-      module_name: orchestration.orchestration.defs 
+      module_name: orchestration.orchestration 

@@ -17,4 +17,4 @@ dependencies = [
 directory_type = "project"
 
 [tool.dg.project]
-root_module = "orchestration.orchestration.defs"
+root_module = "orchestration.orchestration"
