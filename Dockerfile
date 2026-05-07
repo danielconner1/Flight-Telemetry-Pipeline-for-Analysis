@@ -9,4 +9,4 @@ RUN pip install -e .
 
 ENV DAGSTER_HOME=/tmp
 
-CMD ["dagster", "api", "grpc", "-m", "orchestration.orchestration.defs"]
+CMD ["dagster", "api", "grpc", "-m", "orchestration.orchestration"]
