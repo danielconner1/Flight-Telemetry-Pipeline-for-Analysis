@@ -14,3 +14,6 @@ telemetry_schedule = ScheduleDefinition(
     job=telemetry_job,
     cron_schedule="0 8 * * *",
 )
+
+defs = dg.Definitions(schedules=[telemetry_schedule])
+
