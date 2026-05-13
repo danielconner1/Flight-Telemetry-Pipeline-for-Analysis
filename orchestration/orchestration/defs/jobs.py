@@ -1,5 +1,4 @@
-from dagster import dg
-from dagster import define_asset_job, ScheduleDefinition
+from dagster import define_asset_job, ScheduleDefinition, Definitions
 
 telemetry_job = define_asset_job(
     name="telemetry_job",
@@ -15,6 +14,3 @@ telemetry_schedule = ScheduleDefinition(
     job=telemetry_job,
     cron_schedule="0 8 * * *",
 )
-
-defs = dg.Definitions(schedules=[telemetry_schedule])
-
