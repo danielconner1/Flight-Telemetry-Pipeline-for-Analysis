@@ -8,7 +8,7 @@ import io
 import os
 from dagster import asset, MaterializeResult
 from datetime import datetime, timezone
-from ..db_utils import insert_into_pipeline_runs_table
+from ..db_utils import insert_into_pipeline_runs_table, get_pipeline_runs_count
 from ..s3_utils import (get_file_list, get_df_from_s3_csv, move_s3_bucket_file,
                       upload_to_s3, has_been_processed, is_file)
 
@@ -90,10 +90,21 @@ def ingest_raw_csv_to_parquet():
 
     conn_str = os.environ.get("POSTGRES_URL")
 
+    if not conn_str:
+        print("Postgres URL not configured")
+
+    table_count = get_pipeline_runs_count(conn_str)
+
+    print("Pipeline runs count before insert:", table_count)
     print("Inserting into pipeline_runs table...")
 
     insert_into_pipeline_runs_table(started, ended, total_file_num, skipped, failed,
                                     "ingest", conn_str)
+
+    table_count = get_pipeline_runs_count(conn_str)
+
+    print("Pipeline runs count after insert:", table_count)
+
 
     # Outputs summary counts of processed and failed files
     print("SUMMARY RESULTS")
