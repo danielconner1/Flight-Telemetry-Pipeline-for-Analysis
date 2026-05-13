@@ -89,6 +89,8 @@ def ingest_raw_csv_to_parquet():
     total_file_num = s3_incoming_files.count()
 
     conn_str = os.environ.get("POSTGRES_URL")
+
+    print("Inserting into pipeline_runs table...")
     insert_into_pipeline_runs_table(started, ended, total_file_num, skipped, failed,
                                     "ingest", conn_str)
 
