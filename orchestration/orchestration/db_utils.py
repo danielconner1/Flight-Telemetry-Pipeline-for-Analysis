@@ -1,0 +1,26 @@
+from sqlalchemy import create_engine, text
+import pandas as pd
+from datetime import datetime, timezone
+
+def insert_into_table_from_df(table_df: pd.DataFrame, table_name:str, schema:str, db_url:str):
+    engine = create_engine(db_url)
+    table_df.to_sql(table_name, engine, schema=schema, if_exists='append')
+
+
+def insert_into_pipeline_runs_table(started: datetime, completed_at: datetime,
+                                    files_processed: int, files_skipped: int,
+                                    files_failed: int, stage: str, conn_str:str):
+    log_df = pd.DataFrame([{
+        "run_id": 'DEFAULT',
+        "stage": stage,
+        "status": "processed",
+        "files_processed": files_processed,
+        "files_skipped": files_skipped,
+        "files_failed": files_failed,
+        "started_at": started,
+        "completed_at": completed_at,
+    }])
+
+    insert_into_table_from_df(log_df, "pipeline_runs", "telemetry", conn_str)
+
+

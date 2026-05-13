@@ -5,7 +5,10 @@ Skips existing files and logs processing results.
 """
 
 import io
+import os
 from dagster import asset, MaterializeResult
+from datetime import datetime, timezone
+from ..db_utils import insert_into_pipeline_runs_table
 from ..s3_utils import (get_file_list, get_df_from_s3_csv, move_s3_bucket_file,
                       upload_to_s3, has_been_processed, is_file)
 
@@ -17,6 +20,7 @@ from ..config import (
     S3_BUCKET
 )
 
+
 @asset()
 def ingest_raw_csv_to_parquet():
     print("Starting ingest...")
@@ -24,6 +28,7 @@ def ingest_raw_csv_to_parquet():
     processed = 0
     skipped = 0
     failed = 0
+    started = datetime.now(timezone.utc)
 
     s3_incoming_files = get_file_list(S3_BUCKET, S3_RAW_INCOMING_PATH)
 
@@ -79,6 +84,13 @@ def ingest_raw_csv_to_parquet():
         except Exception as e:
             failed += 1
             print(f"Failed to process parquet file: {parquet_file_name}", e)
+
+    ended = datetime.now(timezone.utc)
+    total_file_num = s3_incoming_files.count()
+
+    conn_str = os.environ.get("POSTGRES_URL")
+    insert_into_pipeline_runs_table(started, ended, total_file_num, skipped, failed,
+                                    "ingest", conn_str)
 
     # Outputs summary counts of processed and failed files
     print("SUMMARY RESULTS")
