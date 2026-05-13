@@ -1,3 +1,4 @@
+from dagster import dg
 from dagster import define_asset_job, ScheduleDefinition
 
 telemetry_job = define_asset_job(
