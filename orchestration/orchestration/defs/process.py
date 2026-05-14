@@ -21,11 +21,15 @@ Design principles:
 """
 
 import io
+import os
 import pandas as pd
+from datetime import datetime, timezone
 from dagster import asset, MaterializeResult
 from .ingest import ingest_raw_csv_to_parquet
 from ..s3_utils import (get_file_list, has_been_processed, is_file,
                        upload_to_s3, get_s3_file)
+from ..db_utils import insert_into_pipeline_runs_table, get_pipeline_runs_count
+
 
 from ..config import (
     DATE_COLS,
@@ -67,6 +71,8 @@ def process():
     skipped = 0
     failed = 0
 
+    started = datetime.now(timezone.utc)
+
     s3_parquet_files = get_file_list(S3_BUCKET, S3_PARQUET_PATH)
 
     for parquet_file_name in s3_parquet_files:
@@ -104,6 +110,27 @@ def process():
         except Exception as e:
             failed += 1
             print(f"Exception while processing {processed_file_name}: {e}")
+
+        ended = datetime.now(timezone.utc)
+
+        total_file_num = len(s3_parquet_files)
+
+        conn_str = os.environ.get("POSTGRES_URL")
+
+        if not conn_str:
+            print("Postgres URL not configured")
+
+        table_count = get_pipeline_runs_count(conn_str)
+
+        print("Pipeline runs count before insert:", table_count)
+        print("Inserting into pipeline_runs table...")
+
+        insert_into_pipeline_runs_table(started, ended, total_file_num, skipped, failed,
+                                        "process", conn_str)
+
+        table_count = get_pipeline_runs_count(conn_str)
+
+        print("Pipeline runs count after insert:", table_count)
 
     # Outputs summary counts of processed and failed files
     print("SUMMARY RESULTS")

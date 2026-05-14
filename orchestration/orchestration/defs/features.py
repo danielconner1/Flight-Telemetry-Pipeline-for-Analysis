@@ -23,12 +23,15 @@ Design principles:
 """
 
 import pandas as pd
+import os
+from datetime import datetime, timezone
 from dagster import asset, MaterializeResult
 from .ingest import ingest_raw_csv_to_parquet
 from .process import process
 import io
 from ..s3_utils import (get_file_list,
                        is_file, upload_to_s3, get_df_from_s3_parquet)
+from ..db_utils import insert_into_pipeline_runs_table, get_pipeline_runs_count
 
 from ..config import (
     S3_PROCESSED_PATH,
@@ -60,6 +63,7 @@ def build_summary_features(df: pd.DataFrame, file_name: str) -> dict:
 def features():
     summaries = []
 
+    started = datetime.now(timezone.utc)
     status = "Success"
     s3_processed_files = get_file_list(S3_BUCKET, S3_PROCESSED_PATH)
 
@@ -92,6 +96,27 @@ def features():
 
     print("\nSummary dataset created")
     print(summary_df.head())
+
+    ended = datetime.now(timezone.utc)
+
+    total_file_num = len(s3_processed_files)
+
+    conn_str = os.environ.get("POSTGRES_URL")
+
+    if not conn_str:
+        print("Postgres URL not configured")
+
+    table_count = get_pipeline_runs_count(conn_str)
+
+    print("Pipeline runs count before insert:", table_count)
+    print("Inserting into pipeline_runs table...")
+
+    insert_into_pipeline_runs_table(started, ended, total_file_num, 0, 0,
+                                    "features", conn_str)
+
+    table_count = get_pipeline_runs_count(conn_str)
+
+    print("Pipeline runs count after insert:", table_count)
 
     return MaterializeResult(
         metadata= {
