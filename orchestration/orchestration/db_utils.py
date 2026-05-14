@@ -10,7 +10,7 @@ def get_pipeline_runs_count( db_url:str):
     engine = create_engine(db_url)
     count = engine.connect().execute(text("""
         SELECT COUNT(*)
-        FROM table_name.pipeline_runs
+        FROM telemetry.pipeline_runs
     """)).scalar()
 
     return count
