@@ -86,7 +86,7 @@ def ingest_raw_csv_to_parquet():
             print(f"Failed to process parquet file: {parquet_file_name}", e)
 
     ended = datetime.now(timezone.utc)
-    total_file_num = s3_incoming_files.count()
+    total_file_num = len(s3_incoming_files)
 
     conn_str = os.environ.get("POSTGRES_URL")
 
