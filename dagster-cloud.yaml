@@ -3,3 +3,7 @@ locations:
     image: 585369386233.dkr.ecr.us-east-2.amazonaws.com/telemetry-pipeline:v2
     code_source:
       module_name: orchestration.orchestration
+    container_context:
+      docker:
+        env_vars:
+          - POSTGRES_URL
