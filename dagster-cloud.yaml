@@ -1,5 +1,5 @@
 locations:
   - location_name: Flight-Telemetry-Pipeline-for-Analysis
-    image: 585369386233.dkr.ecr.us-east-2.amazonaws.com/telemetry-pipeline:latest
+    image: 585369386233.dkr.ecr.us-east-2.amazonaws.com/telemetry-pipeline:v2
     code_source:
       module_name: orchestration.orchestration
