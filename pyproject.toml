@@ -9,7 +9,9 @@ dependencies = [
   "dagster-dg-cli",
   "pandas",
   "pyarrow",
-  "boto3"
+  "boto3",
+  "sqlalchemy",
+  "psycopg2-binary"
 ]
 
 
