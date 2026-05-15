@@ -31,7 +31,8 @@ from .process import process
 import io
 from ..s3_utils import (get_file_list,
                        is_file, upload_to_s3, get_df_from_s3_parquet)
-from ..db_utils import insert_into_pipeline_runs_table, get_pipeline_runs_count
+from ..db_utils import (insert_into_pipeline_runs_table, get_pipeline_runs_count,
+                        insert_into_table_from_df)
 
 from ..config import (
     S3_PROCESSED_PATH,
@@ -92,15 +93,13 @@ def features():
     summary_df.to_parquet(buffer, engine="pyarrow", index=False)
     buffer.seek(0)
 
+    #Place features data in S3
     upload_to_s3(S3_BUCKET, S3_FEATURES_FILE_NAME, buffer)
 
     print("\nSummary dataset created")
-    print(summary_df.head())
 
     ended = datetime.now(timezone.utc)
-
     total_file_num = len(s3_processed_files)
-
     conn_str = os.environ.get("POSTGRES_URL")
 
     if not conn_str:
@@ -111,12 +110,16 @@ def features():
     print("Pipeline runs count before insert:", table_count)
     print("Inserting into pipeline_runs table...")
 
+    #Insert pipeline run results into PostGres
     insert_into_pipeline_runs_table(started, ended, total_file_num, 0, 0,
                                     "features", conn_str)
 
     table_count = get_pipeline_runs_count(conn_str)
-
     print("Pipeline runs count after insert:", table_count)
+
+    #Insert summary features data into PostGres
+    insert_into_table_from_df(summary_df,"features",
+                              "telemetry", conn_str, 'replace')
 
     return MaterializeResult(
         metadata= {

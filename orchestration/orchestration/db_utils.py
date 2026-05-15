@@ -1,10 +1,13 @@
 from sqlalchemy import create_engine, text
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime
+from typing import Literal
 
-def insert_into_table_from_df(table_df: pd.DataFrame, table_name:str, schema:str, db_url:str):
+def insert_into_table_from_df(table_df: pd.DataFrame, table_name:str,
+                              schema:str, db_url:str,
+                              if_exists:Literal["fail", "replace", "append"] = 'append'):
     engine = create_engine(db_url)
-    table_df.to_sql(table_name, engine, schema=schema, if_exists='append', index=False)
+    table_df.to_sql(table_name, engine, schema=schema, if_exists=if_exists, index=False)
 
 def get_pipeline_runs_count( db_url:str):
     engine = create_engine(db_url)
@@ -28,6 +31,8 @@ def insert_into_pipeline_runs_table(started: datetime, completed_at: datetime,
         "completed_at": completed_at,
     }])
 
-    insert_into_table_from_df(log_df, "pipeline_runs", "telemetry", conn_str)
+    insert_into_table_from_df(log_df, "pipeline_runs",
+                              "telemetry", conn_str, 'append')
+
 
 

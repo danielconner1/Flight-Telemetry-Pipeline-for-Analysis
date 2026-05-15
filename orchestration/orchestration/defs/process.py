@@ -111,26 +111,26 @@ def process():
             failed += 1
             print(f"Exception while processing {processed_file_name}: {e}")
 
-        ended = datetime.now(timezone.utc)
+    ended = datetime.now(timezone.utc)
 
-        total_file_num = len(s3_parquet_files)
+    total_file_num = len(s3_parquet_files)
 
-        conn_str = os.environ.get("POSTGRES_URL")
+    conn_str = os.environ.get("POSTGRES_URL")
 
-        if not conn_str:
-            print("Postgres URL not configured")
+    if not conn_str:
+        print("Postgres URL not configured")
 
-        table_count = get_pipeline_runs_count(conn_str)
+    table_count = get_pipeline_runs_count(conn_str)
 
-        print("Pipeline runs count before insert:", table_count)
-        print("Inserting into pipeline_runs table...")
+    print("Pipeline runs count before insert:", table_count)
+    print("Inserting into pipeline_runs table...")
 
-        insert_into_pipeline_runs_table(started, ended, total_file_num, skipped, failed,
-                                        "process", conn_str)
+    insert_into_pipeline_runs_table(started, ended, total_file_num, skipped, failed,
+                                    "process", conn_str)
 
-        table_count = get_pipeline_runs_count(conn_str)
+    table_count = get_pipeline_runs_count(conn_str)
 
-        print("Pipeline runs count after insert:", table_count)
+    print("Pipeline runs count after insert:", table_count)
 
     # Outputs summary counts of processed and failed files
     print("SUMMARY RESULTS")
